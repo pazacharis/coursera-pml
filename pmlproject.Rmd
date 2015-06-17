@@ -1,0 +1,119 @@
+---
+title: "Coursera - Practical Machine Learning project"
+output: html_document
+---
+
+### Goal
+
+Using the [Weight Lifting Exercise Dataset](http://groupware.les.inf.puc-rio.br/har) try to predict the manner in which people did the exercise, i.e. the "classe" variable. The [training set](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv) and the [test set](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv) contain data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants who are asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+### Load the needed libraries and set a seed
+
+```{r, eval = FALSE}
+library(knitr)
+library(caret)
+
+set.seed(1234)
+```
+
+### Load the data
+
+Firstly, download the data to the preferred working directory. Then read the files and specify the values that should be treated as NAs.
+
+```{r}
+train = read.csv("pml-training.csv", na.strings = c("NA", "#DIV/0!",""))
+test = read.csv("pml-testing.csv", na.strings = c("NA", "#DIV/0!",""))
+dim(train)
+dim(test)
+```
+
+The training set contains 19622 observations of 160 variables and the test set contains 20 observations of 160 variables.
+
+
+### Reduce the number of predictors
+
+```{r}
+head(names(train), n=10)
+```
+We should remove the first 5 columns as they are purely descriptive and should not be considered withing the predictive model.
+
+Then we remove columns that contain many NA values. Let's chooose the threshold to be at 50%.
+
+```{r, eval =FALSE}
+colsNAs <- colSums(is.na(train)) > nrow(train) * 0.5
+train <- train[, !colsNAs]
+test <- test[, !colsNAs]
+```
+
+Lastly, remove columns with near zero variance.
+```{r, eval=FALSE}
+colsNearZeroVar <- nearZeroVar(train)
+train <- train[, -colsNearZeroVar]
+test <- test[, -colsNearZeroVar]
+```
+
+We have reduced the number of predictors to 54.
+
+### Cross Validation
+
+This step is useful for avoiding overfitting and check the model's accuracy on a cross validation set, before applying it on the final test set.
+
+Split the train data into two sets.
+```{r, eval=FALSE}
+inTrain <- createDataPartition(train$classe,
+                               p = 0.7,
+                               list = FALSE)
+train.clean <- train[inTrain, ]
+train.crossVal <- train[-inTrain, ]
+```
+
+### Model fitting
+
+For this non-linear problem we try a random forest model.
+
+```{r, eval=FALSE}
+model <- randomForest(classe ~ ., data=train.clean)
+model
+```
+
+The OOB estimate of error of 0.29% looks promising.
+
+Predictions:
+```{r, eval=FALSE}
+model <- randomForest(classe ~ ., data=train.clean)
+model
+```
+
+The out of sample error is: 0.002209006
+
+Confusion matrix:
+```{r, eval=FALSE}
+print(confMatrix)
+```
+
+We are happy to see that the model's accuracy is calculated at 0.9978.
+
+### Final predicitons
+
+Apply the prediciton model to the test set:
+```{r, eval=FALSE}
+test.predictions <- predict(model, test)
+```
+
+### Save final predictions
+
+For the Coursera evaluation we need to write the predictions in separate files:
+
+```{r, eval=FALSE}
+pml_write_files = function(x){
+    n = length(x)
+    for(i in 1:n){
+        filename = paste0("problem_id_",i,".txt")
+        write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+    }
+}
+
+pml_write_files(test.predictions)
+```
+
+The 20 predictions were submitted to Coursera and all of them were evaluated as correct.
