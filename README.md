@@ -112,4 +112,4 @@ pml_write_files = function(x){
 pml_write_files(test.predictions)
 ```
 
-The 20 predictions were submitted to Coursera and all of them were correct.
+The 20 predictions were submitted to Coursera and all of them were evaluated as correct.
