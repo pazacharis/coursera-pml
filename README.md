@@ -1,7 +1,3 @@
----
-title: "Coursera - Practical Machine Learning project"
-output: html_document
----
 
 ### Goal
 
